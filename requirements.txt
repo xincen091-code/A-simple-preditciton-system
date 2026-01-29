@@ -1,0 +1,15 @@
+streamlit
+pandas
+numpy
+matplotlib
+altair
+wordcloud
+openpyxl
+scikit-learn
+requests
+jupyter
+notebook
+ipykernel
+nltk==3.8.1
+textblob
+nrclex
