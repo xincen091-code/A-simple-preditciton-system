@@ -1,1 +1,1 @@
-https://stock-news-headlines-prediction.streamlit.app/
+https://a-simple-preditciton-system-xiaomutou.streamlit.app/
