@@ -38,7 +38,7 @@ st.title("News Headline Sentiment Analysis & Market Movement Prediction")
 @st.cache_data(ttl=900) 
 def load_data(version=None):
     import io, requests 
-    RAW_BASE = "https://raw.githubusercontent.com/crndogan/stock-news-prediction/main/notebooks"
+    RAW_BASE = "https://raw.githubusercontent.com/xincen091-code/A-simple-preditciton-system/main/notebooks"
     LOCAL_BASE = "notebooks"
     def fetch_bytes(url, timeout=20):
         r = requests.get(url, headers={"User-Agent": "streamlit-app"}, timeout=timeout)
@@ -415,7 +415,7 @@ st.markdown(
     "<hr style='margin-top: 2rem; margin-bottom: 0.5rem;'>"
     "<div style='text-align: center;'>"
     "View the full project on GitHub: "
-    "<a href='https://github.com/crndogan/stock-news-prediction/tree/main' target='_blank'>"
+    "<a href='https://github.com/xincen091-code/A-simple-preditciton-system/tree/main' target='_blank'>"
     "crndogan/stock-news-prediction</a>"
     "</div>",
     unsafe_allow_html=True
