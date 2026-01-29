@@ -416,7 +416,7 @@ st.markdown(
     "<div style='text-align: center;'>"
     "View the full project on GitHub: "
     "<a href='https://github.com/xincen091-code/A-simple-preditciton-system/tree/main' target='_blank'>"
-    "crndogan/stock-news-prediction</a>"
+    "xincen091-code/A-simple-preditciton-system</a>"
     "</div>",
     unsafe_allow_html=True
 )
