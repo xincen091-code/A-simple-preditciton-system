@@ -1,0 +1,113 @@
+name: Daily Stock News Modeling
+
+on:
+  schedule:
+    - cron: '0 6 * * *'
+  workflow_dispatch: {}
+
+jobs:
+  run-pipeline:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python 3.10
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Upgrade pip
+        run: python -m pip install --upgrade pip
+
+      - name: Register Python kernel for Jupyter
+        run: |
+          pip install notebook ipykernel
+          python -m ipykernel install --user --name=python3
+
+      - name: Install Python dependencies
+        run: pip install -r requirements-pipeline.txt
+
+      - name: Cache NLTK data
+        uses: actions/cache@v4
+        with:
+          path: nltk_data
+          key: ${{ runner.os }}-nltk-${{ hashFiles('requirements-pipeline.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-nltk-
+
+      - name: Download NLTK & TextBlob corpora
+        env:
+          NLTK_DATA: ${{ github.workspace }}/nltk_data
+        run: |
+          python - <<'PY'
+          import os, time
+          import nltk
+          from textblob import download_corpora
+          data_dir = os.environ.get("NLTK_DATA", "./nltk_data")
+          os.makedirs(data_dir, exist_ok=True)
+          if data_dir not in nltk.data.path:
+            nltk.data.path.append(data_dir)
+          pkgs = [
+            "punkt",
+            "punkt_tab",
+            "stopwords",
+            "vader_lexicon",
+            "averaged_perceptron_tagger",
+            "wordnet"
+          ]
+          for p in pkgs:
+            for attempt in range(3):
+              try:
+                ok = nltk.download(p, download_dir=data_dir, quiet=True)
+                if ok:
+                  break
+              except Exception:
+                if attempt == 2:
+                  raise
+              time.sleep(3 * (attempt + 1))
+          download_corpora.download_all()
+          PY
+
+      - name: Export API Key to environment
+        run: echo "NEWSDATA_API_KEY=${{ secrets.NEWSDATA_API_KEY }}" >> $GITHUB_ENV
+
+      - name: Execute Master Notebook
+        run: |
+          mkdir -p notebooks
+          python - <<'PY'
+          import nltk
+          from textblob import download_corpora
+          nltk.download("punkt")
+          nltk.download("punkt_tab")
+          nltk.download("stopwords")
+          nltk.download("wordnet")
+          download_corpora.download_all()
+          PY
+          jupyter nbconvert \
+            --to notebook \
+            --execute notebooks/Master_Data_Modeling.ipynb \
+            --ExecutePreprocessor.kernel_name=python3 \
+            --ExecutePreprocessor.timeout=-1 \
+            --ClearOutputPreprocessor.enabled=True \
+            --output-dir notebooks \
+            --output Master_Data_Modeling_output.ipynb
+
+      - name: Debug — show scraped date
+        run: |
+          grep -R "Scraping news for date" notebooks/Master_Data_Modeling_output.ipynb \
+            || echo "scrape debug line not found!"
+
+      - name: Show workspace files
+        run: ls -R .
+
+      - name: Commit & push outputs
+        if: github.ref == 'refs/heads/main'
+        run: |
+          git config --global user.name "github-actions"
+          git config --global user.email "github-actions@github.com"
+          git add notebooks/Master_Data_Modeling_output.ipynb notebooks/*.csv *.xlsx *.txt
+          git add runtime.txt
+          git commit -m "chore: ensure punkt corpora available for TextBlob/NRCLex" || echo "No changes to commit"
+          git push
